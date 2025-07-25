@@ -88,5 +88,30 @@ app.post("/books", (req,res) => {
     res.status(201).send("Book Posted With Sucess");
 });
 
+//✅ DELETE /books:id - delete a specific book
+app.delete("/books/:id", (req, res) => {
+      // ✅ Extract ID from route parameters
+  const id = parseInt(req.params.id);
+
+  // ⚠️ Validate input
+  if (!id) {
+    return res.status(400).send("Invali data. 'ID' is required");
+  }
+
+  // find index of the book whit given ID
+  const index = books.findIndex((books) => books.id === id);
+
+   // ⚠️ Check if the book exists
+  if (index === -1) {
+    return res.status(404).send("Book not found.");
+  }
+
+  // DELETE the book
+  books.splice(index, 1);
+ 
+ // define the response
+ res.status(200).send("The Book Was Deleted with Sucess");
+});
+
 // ✅ Export the app so it can be used in server.js (or other files)
 export default app;
