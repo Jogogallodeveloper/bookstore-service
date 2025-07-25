@@ -1,29 +1,24 @@
 //import the express liberay, wich simplifies buildings web server in Node.js
 import express from "express";
+import connectToDatabase from "./config/dbConnect.js";
+import book from "./models/book.js";
+
+const connect = await connectToDatabase();
+
+connect.on("error", (error) => {
+  console.error("❌❌ [ERROR]  Failed to Connect to Database", error);
+});
+
+connect.once("open", () => {
+  console.log("✅✅[SUCCESSFULLY] Database Connected Successfully");
+});
 
 // ✅ Create the main Express application instance
 const app = express();
 // ✅ Create the main Express application instance
 app.use(express.json());
 
-// ✅ Simulated in-memory data (no database yet) — list of books
-const books = [
-    {
-        id: 1,
-        title: "The Lord of the Ring"
-    },
-    {
-        id: 2,
-        title: "The Hobbit"
-    }
-];
 
-//define functino that will be used to find de /books/:id
-function findbook(id) {
-   return books.findIndex(book => {
-        return book.id === Number(id);
-    });
-};
 
 // ✅ Home route — just to confirm that the server is running
 app.get("/", (req,res) => {
@@ -31,8 +26,13 @@ app.get("/", (req,res) => {
 });
 
 // ✅ GET /books — returns the list of all books in JSON format
-app.get("/books", (req, res) => {
-    res.status(200).json(books);
+app.get("/books", async (req, res) => {
+    
+    const listBooks = await book.find({});
+
+    console.log("📄 Resultado vindo do Mongo:", listBooks); // Adiciona isso
+    
+    res.status(200).json(listBooks);
 });
 
 //✅ GET /books:id - returns only the book set on the ID
