@@ -99,7 +99,7 @@ class BookController {
 
             // console log to print the response from mongo
             console.log("📄 Resultado vindo do Mongo:", deletedBook);
-
+            // bloco de resposta
             res.status(200).json({ message: "✅ Book deleted successfully!" });
 
         } catch (error) {
