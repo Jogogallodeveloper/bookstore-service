@@ -1,4 +1,5 @@
 //import modules
+import { author } from "../models/author.js";
 import book from "../models/book.js";
 
 // ✅ GET /books — returns the list of all books in JSON format
@@ -44,21 +45,29 @@ class BookController {
     // methodo POST to create a specific Book
     static async postbook(req, res) {
 
-        const { title, publisher, value, pages } = req.body
+        const newBook = req.body
 
         // Validação simples
-        if (!publisher || !title || !value || !pages) {
-            return res.status(400).send("Invalid book data. 'publisher','title' and 'value' are required.");
-        }
+        // if (!publisher || !title || !value || !pages) {
+        //     return res.status(400).send("Invalid book data. 'publisher','title' and 'value' are required.");
+        // }
 
         try {
             //define const that will create the book on mondoDB
-            const newBook = await book.create(req.body);
+            //const newBook = await book.create(req.body);
+            //define the methodo that create the book, but firts find the id of the author
+            const findAuthor = await author.findById(newBook.author);
+
+            // define the  object of the book 
+            const completeBook = { ...newBook, author: { ...findAuthor._doc } };
+
+            const bookCreated = await book.create(completeBook);
+
 
             // define sucess response
             res.status(201).json({
                 message: "Created with Sucess",
-                book: newBook
+                book: bookCreated
             });
         } catch (error) {
             res.status(500).
@@ -107,6 +116,23 @@ class BookController {
                 json({ message: `${error.message} - ❌ Internal server error while DELETE the book.` });
         }
     };
+
+    // methodo GET by parametre of search
+     static async listBookByPublisher (req, res) {
+        const publisher = req.query.publisher;
+
+        try {
+            // define the action to find the book by publisher
+            const booksByPublisher = await book.find({publisher});
+
+            // define the response when find the book
+            res.status(200).json(booksByPublisher);
+        } catch (error) {
+
+            // define the answare when book not find
+            res.status(500).json({message: `${error.message} - ❌ error to find the book by publisher`});
+        }
+     };
 
 };
 
