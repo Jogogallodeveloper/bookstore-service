@@ -1,25 +1,29 @@
 //import modules
 import { author } from "../models/author.js";
 import book from "../models/book.js";
+import mongoose from "mongoose";
 
 // ✅ GET /books — returns the list of all books in JSON format
 class BookController {
 
     // ✅ methodo get all books
-    static listBooks = async (req, res) => {
+    static listBooks = async (req, res, next) => {
 
         try {
+
+            //define the methodo that will find all books
+
             const listBooks = await book.find({});
             // console log to print the response from mongo
+
             console.log("📄 Resultado vindo do Mongo:", listBooks);
             // define the response when its ok
+
             res.status(200).json(listBooks);
+
         } catch (error) {
-            res.status(500).
-                json({
-                    message: `${error.message}
-                 - ❌ Internal server error while finding book.` });
-        }
+            next(error);
+        };
 
     };
 
@@ -27,34 +31,35 @@ class BookController {
     static listBookById = async (req, res) => {
         try {
 
+            //define the methodo that will get the id from the books
             const id = req.params.id
 
+            //define the methodo that will find the specific book
             const bookResult = await book.findById(id);
+
             // console log to print the response from mongo
+
             console.log("📄 Resultado vindo do Mongo:", bookResult);
+
             // define the response when its ok
+
             res.status(200).json(bookResult);
         } catch (error) {
-            res.status(400).
-                json({
-                    message: `${error.message}
-                 - ❌ Internal server error while updating the book.` });
-        }
+
+            //call the error middleware
+            next(error);
+        };
 
     };
+
     // methodo POST to create a specific Book
     static postbook = async (req, res) => {
 
+        //define the variable that will get the data from body json
         const newBook = req.body
 
-        // Validação simples
-        // if (!publisher || !title || !value || !pages) {
-        //     return res.status(400).send("Invalid book data. 'publisher','title' and 'value' are required.");
-        // }
-
         try {
-            //define const that will create the book on mondoDB
-            //const newBook = await book.create(req.body);
+
             //define the methodo that create the book, but firts find the id of the author
             const findAuthor = await author.findById(newBook.author);
 
@@ -66,73 +71,117 @@ class BookController {
 
             // define sucess response
             res.status(201).json({
-                message: "Created with Sucess",
-                book: bookCreated
+                message: "Created with Sucess", book: bookCreated
             });
         } catch (error) {
-            res.status(500).
-                json({ message: `${error.message} - ❌ error to create the book` });
+
+            // define the error response
+            next(error);
         }
     };
 
     // methodo PUT a specific book 
-    static PutBookById = async (req, res) => {
+    static PutBookById = async (req, res, next) => {
+
         try {
-            const id = req.params.id
+            const bookId = req.params.id
+            const { author: authorId, ...updateData } = req.body;
 
-            await book.findByIdAndUpdate(id, req.body);
+            // Validate Book ID
+            if (!mongoose.Types.ObjectId.isValid(bookId)) {
+                return res.status(400).json({ message: "Invalid Book ID format." });
+            }
 
-            // console log to print the response from mongo
-            console.log("📄 Resultado vindo do Mongo:", book);
+            // If authorId exists, validate & fetch
+            if (authorId) {
+                if (!mongoose.Types.ObjectId.isValid(authorId)) {
+                    return res.status(400).json({ message: "Invalid Author ID format." });
+                }
 
-            // define the response when its ok
-            res.status(200).json({ message: "Book updated successfully." });
-        } catch (error) {
-            res.status(500).
-                json({ message: `${error.message} - ❌ Internal server error while updating the book.` });
-        }
-    };
+                const findAuthor = await author.findById(authorId);
+                 if (!findAuthor) {
+                    return res.status(400).json({message: "Author not found !"});
+                 };
 
-    // methodo DELETE a specific book 
-    static DeleteBookById = async(req, res) => {
-        try {
-            const id = req.params.id;
-
-            const deletedBook = await book.findByIdAndDelete(id);
-
-
-            if (!deletedBook) {
-                return res.status(404).json({ message: "Book not found." });
-
+                 //only attach author ID (not full Document)
+                 updateData.author = authorId;
             };
 
-            // console log to print the response from mongo
-            console.log("📄 Resultado vindo do Mongo:", deletedBook);
-            // bloco de resposta
-            res.status(200).json({ message: "✅ Book deleted successfully!" });
+            //update the book
+            const updateBook = await book.findById(
+                bookId,
+                updateData,
+                {
+                    new:true
+                }
+            ).populate("author");
+
+            if (!updateBook) {
+                return res.status(400).json({message: "Book not Found !"});
+            };
+
+            //define sucess message
+            return res.status(200).json({message: "Book Updated Sucessfully !!"});
+
 
         } catch (error) {
-            res.status(500).
-                json({ message: `${error.message} - ❌ Internal server error while DELETE the book.` });
-        }
+            next(error);
+
+        };
     };
 
+
+    // methodo DELETE a specific book 
+    static DeleteBookById = async (req, res) => {
+
+    try {
+
+        // define the variable that will get the ID Book from the data JSON
+        const id = req.params.id;
+
+        //define the methodo that will find de book by his id and deleted
+        const deletedBook = await book.findByIdAndDelete(id);
+
+        // define the response if the methodo did not sucessfuly deleted the book
+        if (!deletedBook) {
+            return res.status(404).json({ message: "Book not found." });
+
+        };
+
+        // console log to print the response from mongo
+        console.log("📄 Resultado vindo do Mongo:", deletedBook);
+
+        // define the sucessfully message
+        res.status(200).json({ message: "✅ Book deleted successfully!" });
+
+    } catch (error) {
+
+        //define the error response 
+        next(error);
+
+    };
+};
+
     // methodo GET by parametre of search
-     static listBookByPublisher = async (req, res) => {
-        const publisher = req.query.publisher;
+    static listBookByPublisher = async (req, res) => {
 
-        try {
-            // define the action to find the book by publisher
-            const booksByPublisher = await book.find({publisher});
+    //define the variable that will get the publisher from json request
+    const publisher = req.query.publisher;
 
-            // define the response when find the book
-            res.status(200).json(booksByPublisher);
-        } catch (error) {
+    // define the try catch 
+    try {
 
-            // define the answare when book not find
-            res.status(500).json({message: `${error.message} - ❌ error to find the book by publisher`});
-        }
-     };
+        // define the action to find the book by publisher
+        const booksByPublisher = await book.find({ publisher });
+
+        // define the response when find the book
+        res.status(200).json(booksByPublisher);
+
+    } catch (error) {
+        //call the middleware error treatment
+        next(error);
+    };
+};
 
 };
 
