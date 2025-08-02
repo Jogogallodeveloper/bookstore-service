@@ -5,8 +5,13 @@ const bookSchema = new mongoose.Schema({
   publisher: { type: String },
   value: { type: Number },
   pages: { type: Number },
+  author: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "author",
+    required: true
+  }
 }, { versionKey: false });
 
-const book = mongoose.model("Book", bookSchema, "livraria");
+const book = mongoose.model("Book", bookSchema, "bookStore");
 
 export default book;
