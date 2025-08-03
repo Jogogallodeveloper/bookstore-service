@@ -13,7 +13,7 @@ class BookController {
 
             //define the methodo that will find all books
 
-            const listBooks = await book.find({});
+            const listBooks = await book.find({}).populate("author").populate("publisher");
             // console log to print the response from mongo
 
             console.log("📄 Resultado vindo do Mongo:", listBooks);

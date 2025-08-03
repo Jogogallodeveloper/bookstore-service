@@ -3,7 +3,7 @@ import { error } from "console";
 import { author } from "../models/author.js";
 import mongoose from "mongoose";
 
-// ✅ GET /author — returns the list of all author in JSON format
+// ✅ define the auhtorController class 
 class authorController {
 
     // ✅ methodo get all author
