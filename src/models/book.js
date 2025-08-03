@@ -9,6 +9,11 @@ const bookSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "author",
     required: true
+  },
+  publisher: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "publisher",
+    required: true
   }
 }, { versionKey: false });
 
