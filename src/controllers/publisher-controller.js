@@ -51,7 +51,6 @@ class publisherController {
             //define the middleware erro treatmente
             console.log(error);
             next(error);
-
         }
     };
 
