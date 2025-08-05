@@ -70,10 +70,10 @@ class authorController {
 
         const { name, nationality } = req.body
 
-        // Verify if the Data on JSON its ok
-        if (!name || !nationality) {
-            return res.status(400).send("Invalid Author data. 'Name' and 'nationality' are required.");
-        }
+        // // Verify if the Data on JSON its ok
+        // if (!name || !nationality) {
+        //     return res.status(400).send("Invalid Author data. 'Name' and 'nationality' are required.");
+        // }
 
         try {
             //define const that will create the Author on mondoDB

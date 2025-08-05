@@ -53,12 +53,12 @@ class BookController {
     };
 
     // methodo POST to create a specific Book
-    static postbook = async (req, res) => {
-
-        //define the variable that will get the data from body json
-        const newBook = req.body
+    static postbook = async (req, res, next) => {
 
         try {
+
+            //define the variable that will get the data from body json
+            const { title, value, pages, author: authorId, publisher: publisherId } = req.body;
 
             //define the methodo that create the book, but firts find the id of the author
             const findAuthor = await author.findById(newBook.author);
