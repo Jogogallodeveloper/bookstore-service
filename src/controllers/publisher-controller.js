@@ -31,9 +31,9 @@ class publisherController {
         console.log("Dados do Body", req.body);
        
         //verify if the data on json.body its ok
-        if (!name | !country) {
-            return res.status(400).send("Invalid Publisher data. 'name' our 'country' are required");
-        };
+        // if (!name | !country) {
+        //     return res.status(400).send("Invalid Publisher data. 'name' our 'country' are required");
+        // };
 
         try {
             //define const that will create the Publisher on database
