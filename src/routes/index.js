@@ -7,7 +7,7 @@ const routes = (app) => {
     // ✅ Home route — just to confirm that the server is running
     app.route("/").get((req, res) => res.
         status(200).
-        send("✅ - API REST BOOKS STORE"));
+        send("✅ - BOOKSTORE-SERVICE - API 📚"));
 
         app.use(express.json(), booksRoutes, authors, Publisher );
 };
