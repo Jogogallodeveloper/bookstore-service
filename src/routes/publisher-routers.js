@@ -9,4 +9,10 @@ routes.get("/publisher", publisherController.listPublisher);
 //define POST route for new publishers into mongoDB
 routes.post("/publisher", publisherController.postPublisher);
 
+//define UPDATE route for publisher
+routes.put("/publisher/:id", publisherController.putPublisher);
+
+//define the DELETE router publisher
+routes.delete("/publisher/:id", publisherController.deletePublisher);
+
 export default routes;
