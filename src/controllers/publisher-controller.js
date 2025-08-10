@@ -30,6 +30,10 @@ class publisherController {
       //declare the variable that will get find all publisher
       const listPublisherbyId = await Publisher.findById(publisherId);
 
+      if (!listPublisherbyId) {
+        return next(new NotFound("Publisher ID not Found"));
+      };
+
       //console log of listPublisherId
       console.log("📄Publisher ID", listPublisherbyId);
 
@@ -56,6 +60,10 @@ class publisherController {
     try {
       //define const that will create the Publisher on database
       const newPublisher = await Publisher.create(req.body);
+
+      if (!newPublisher) {
+        return next(new NotFound("Publisher not Created"));
+      };
 
       console.log("New Publisher:", newPublisher);
 
@@ -122,6 +130,11 @@ class publisherController {
     try {
       //define const that will create the Publisher on database
       const deletePublisher = await Publisher.findByIdAndDelete(publisherId);
+
+      //define the return in c case publisher not found
+      if (!deletePublisher) {
+        return next(new NotFound("Publisher not found"));
+      };
 
       console.log("deletePublisherID:", deletePublisher);
 

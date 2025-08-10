@@ -1,6 +1,6 @@
 //import modules
 import { error } from "console";
-import { author } from "../models/author.js";
+import { author } from "../models/index.js";
 import mongoose from "mongoose";
 import NotFound from "../error/not-found.js";
 
@@ -30,9 +30,7 @@ class authorController {
       const authorResult = await author.findById(id);
 
       //Validate if exists the Author
-      if (!authorResult !== null) {
-        res.status(200).send(authorResult);
-      } else {
+      if (!authorResult) {
         next(new NotFound("Author ID Not Found"));
       }
 
@@ -51,14 +49,14 @@ class authorController {
   static postAuthor = async (req, res, next) => {
     const { name, nationality } = req.body;
 
-    // // Verify if the Data on JSON its ok
-    // if (!name || !nationality) {
-    //     return res.status(400).send("Invalid Author data. 'Name' and 'nationality' are required.");
-    // }
-
     try {
       //define const that will create the Author on mondoDB
       const newAuthor = await author.create(req.body);
+
+      //define the constant variabel to verify if newAuthor was created with sucess
+      if (!newAuthor) {
+        return next(new NotFound("Author ID Not Found"));
+      }
 
       // define sucess response
       res.status(201).json({
@@ -97,9 +95,10 @@ class authorController {
 
       const deletedAuthor = await author.findByIdAndDelete(id);
 
+      //define the response if the methodo did not sucessfuly deleted the author
       if (!deletedAuthor) {
-        return res.status(404).json({ message: "Author not found." });
-      }
+        return next(new NotFound("Author not found."));
+      };
 
       // console log to print the response from mongo
       console.log("📄 Resultado vindo do Mongo:", deletedAuthor);
