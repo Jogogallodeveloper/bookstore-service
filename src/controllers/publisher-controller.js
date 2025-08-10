@@ -20,6 +20,27 @@ class publisherController {
     }
   };
 
+  //define GET specific publisher
+  static listPublisherById = async (req, res, next) => {
+
+    //define the const variable that will get the publisher id
+    const publisherId = req.params.id;
+
+    try {
+      //declare the variable that will get find all publisher
+      const listPublisherbyId = await Publisher.findById(publisherId);
+
+      //console log of listPublisherId
+      console.log("📄Publisher ID", listPublisherbyId);
+
+      // define the response when specific publisher is find
+      res.status(200).json(listPublisherbyId);
+    } catch (error) {
+      //call de middleware to handle the error resonse
+      next(error);
+    }
+  };
+
   // methodo POST publisher
   static postPublisher = async (req, res, next) => {
     //define the const that will get the data from JSON.BODY

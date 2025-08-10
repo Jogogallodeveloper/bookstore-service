@@ -35,9 +35,9 @@ class BookController {
       //const bookResult = await book.findById(id);
 
       const doc = await book
-      .findById(id)
-      .populate("author")
-      .populate("publisher");
+        .findById(id)
+        .populate("author")
+        .populate("publisher");
 
       res.status(200).json(doc);
     } catch (error) {
@@ -92,42 +92,45 @@ class BookController {
   static PutBookById = async (req, res, next) => {
     try {
       const bookId = req.params.id;
-      const { author: authorId, ...updateData } = req.body;
+      const {
+        author: authorId,
+        publisher: publisherId,
+        ...updateData
+      } = req.body;
 
-      // Validate Book ID
-      if (!mongoose.Types.ObjectId.isValid(bookId)) {
-        return res.status(400).json({ message: "Invalid Book ID format." });
-      }
-
-      // If authorId exists, validate & fetch
-      if (authorId) {
-        if (!mongoose.Types.ObjectId.isValid(authorId)) {
-          return res.status(400).json({ message: "Invalid Author ID format." });
+      //define the const variable thar will validate if the author Exists
+      if (authorId !== undefined) {
+        const authorDoc = await author.findById(authorId); // CastError se ID inválido
+        if (!authorDoc) {
+          return res.status(404).json({ message: "Author not found" });
         }
-
-        const findAuthor = await author.findById(authorId);
-        if (!findAuthor) {
-          return res.status(400).json({ message: "Author not found !" });
-        }
-
-        //only attach author ID (not full Document)
         updateData.author = authorId;
       }
 
-      //update the book
-      const updateBook = await book
-        .findById(bookId, updateData, {
-          new: true,
-        })
-        .populate("author");
+      //define the const variable that will validate if the Publisher Exists
+      if (publisherId !== undefined) {
+        const publisherDoc = await Publisher.findById(publisherId); // CastError se ID inválido
+        if (!publisherDoc) {
+          return res.status(404).json({ message: "Publisher not found" });
+        }
+        updateData.publisher = publisherId;
+      }
 
-      if (!updateBook) {
+      //only attach author ID (not full Document)
+      const updatedBook = await book
+      .findByIdAndUpdate(bookId, updateData, { new: true, runValidators: true })
+      .populate("author")
+      .populate("publisher");
+
+      if (!updatedBook) {
         return res.status(400).json({ message: "Book not Found !" });
       }
 
       //define sucess message
       return res.status(200).json({ message: "Book Updated Sucessfully !!" });
     } catch (error) {
+
+      //define the error contoller handling
       next(error);
     }
   };

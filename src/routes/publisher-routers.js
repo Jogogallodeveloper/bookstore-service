@@ -6,6 +6,9 @@ const routes = express.Router();
 //define route GET all publisher from mongoDB
 routes.get("/publisher", publisherController.listPublisher);
 
+//define route GET specific publisher
+routes.get("/publisher/:id", publisherController.listPublisherById);
+
 //define POST route for new publishers into mongoDB
 routes.post("/publisher", publisherController.postPublisher);
 
