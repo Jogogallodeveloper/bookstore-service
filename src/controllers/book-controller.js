@@ -1,7 +1,7 @@
 //import modules
-import { author } from "../models/author.js";
-import book from "../models/book.js";
-import { Publisher } from "../models/publisher.js";
+import { author } from "../models/index.js";
+import { book } from "../models/index.js";
+import { Publisher } from "../models/index.js";
 import mongoose from "mongoose";
 
 // ✅ GET /books — returns the list of all books in JSON format
@@ -38,6 +38,12 @@ class BookController {
         .findById(id)
         .populate("author")
         .populate("publisher");
+
+      if (!doc) {
+        return res.status(404).json(
+          { message: "book not founs !" }
+        );
+      };
 
       res.status(200).json(doc);
     } catch (error) {
@@ -78,6 +84,10 @@ class BookController {
         publisher: findPublisher,
       };
 
+      if (!completeBook) {
+        return next(new NotFound("Book not Created"));
+      };
+
       res.status(201).json({
         message: "Created with Success",
         book: completeBook,
@@ -102,8 +112,9 @@ class BookController {
       if (authorId !== undefined) {
         const authorDoc = await author.findById(authorId); // CastError se ID inválido
         if (!authorDoc) {
-          return res.status(404).json({ message: "Author not found" });
-        }
+          return next(new NotFound("Author not found"));
+        };
+
         updateData.author = authorId;
       }
 
@@ -146,8 +157,8 @@ class BookController {
 
       // define the response if the methodo did not sucessfuly deleted the book
       if (!deletedBook) {
-        return res.status(404).json({ message: "Book not found." });
-      }
+        return next(new NotFound("book not found"));
+      };
 
       // console log to print the response from mongo
       console.log("📄 Resultado vindo do Mongo:", deletedBook);
@@ -169,6 +180,10 @@ class BookController {
     try {
       // define the action to find the book by publisher
       const booksByPublisher = await book.find({ publisher });
+
+      if (!booksByPublisher || booksByPublisher.length === 0) {
+        return next(new NotFound("No books found for this Publisher"));
+      };
 
       // define the response when find the book
       res.status(200).json(booksByPublisher);
