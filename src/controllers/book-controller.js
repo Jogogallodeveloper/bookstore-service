@@ -2,7 +2,7 @@
 import { author } from "../models/index.js";
 import { book } from "../models/index.js";
 import { Publisher } from "../models/index.js";
-import mongoose from "mongoose";
+import NotFound from "../error/not-found.js";
 
 // ✅ GET /books — returns the list of all books in JSON format
 class BookController {
@@ -40,10 +40,8 @@ class BookController {
         .populate("publisher");
 
       if (!doc) {
-        return res.status(404).json(
-          { message: "book not founs !" }
-        );
-      };
+        return res.status(404).json({ message: "book not founs !" });
+      }
 
       res.status(200).json(doc);
     } catch (error) {
@@ -86,7 +84,7 @@ class BookController {
 
       if (!completeBook) {
         return next(new NotFound("Book not Created"));
-      };
+      }
 
       res.status(201).json({
         message: "Created with Success",
@@ -113,7 +111,7 @@ class BookController {
         const authorDoc = await author.findById(authorId); // CastError se ID inválido
         if (!authorDoc) {
           return next(new NotFound("Author not found"));
-        };
+        }
 
         updateData.author = authorId;
       }
@@ -129,18 +127,20 @@ class BookController {
 
       //only attach author ID (not full Document)
       const updatedBook = await book
-      .findByIdAndUpdate(bookId, updateData, { new: true, runValidators: true })
-      .populate("author")
-      .populate("publisher");
+        .findByIdAndUpdate(bookId, updateData, {
+          new: true,
+          runValidators: true,
+        })
+        .populate("author")
+        .populate("publisher");
 
       if (!updatedBook) {
-        return res.status(400).json({ message: "Book not Found !" });
+        return next(new NotFound("Book not found"));
       }
 
       //define sucess message
       return res.status(200).json({ message: "Book Updated Sucessfully !!" });
     } catch (error) {
-
       //define the error contoller handling
       next(error);
     }
@@ -158,7 +158,7 @@ class BookController {
       // define the response if the methodo did not sucessfuly deleted the book
       if (!deletedBook) {
         return next(new NotFound("book not found"));
-      };
+      }
 
       // console log to print the response from mongo
       console.log("📄 Resultado vindo do Mongo:", deletedBook);
@@ -183,12 +183,96 @@ class BookController {
 
       if (!booksByPublisher || booksByPublisher.length === 0) {
         return next(new NotFound("No books found for this Publisher"));
-      };
+      }
 
       // define the response when find the book
       res.status(200).json(booksByPublisher);
     } catch (error) {
       //call the middleware error treatment
+      next(error);
+    }
+  };
+
+  static listBookByFilter = async (req, res, next) => {
+    try {
+      // define the variable that will get the query parameters
+      const { publisher, title, minPages, maxPages, authorName } = req.query;
+
+      // define the filter object
+      const filter = {};
+
+      // title: parcial search, case-insensitive
+      if (minPages || maxPages) {
+        filter.pages = {};
+        if (minPages) {
+          filter.pages.$gte = Number(minPages);
+        }
+        if (maxPages) {
+          filter.pages.$lte = Number(maxPages);
+        }
+      }
+
+      // title: parcial search, case-insensitive
+      if (title) {
+        filter.title = { $regex: title, $options: "i" };
+      }
+
+      // publisher: acept NAME ou ID
+      if (publisher) {
+        // 1) try resolve (case-insensitive)
+        const pubByName = await Publisher.findOne({
+          name: { $regex: `^${publisher}$`, $options: "i" },
+        }).select("_id");
+        console.log("Publisher found:", pubByName);
+        if (pubByName) {
+          filter.publisher = pubByName._id;
+        } else {
+          filter.publisher = publisher;
+          console.log("Assuming publisher is an ID:", filter.publisher);
+        }
+      }
+
+      //authorName: acept NAME//define authorName filter
+      if (authorName) {
+        const authors = await author
+          .find({ name: { $regex: authorName, $options: "i" } })
+          .select("_id");
+
+        console.log("Authors found:", authors);
+
+        if (authors.length > 0) {
+          const ids = authors.map((a) => a._id);
+          // cobre ambos os esquemas: author (único) OU authors (array)
+          filter.$or = [{ author: { $in: ids } }, { authors: { $in: ids } }];
+        } else {
+          // middleware já garante ID válido, então podemos usar direto
+          filter.$or = [{ author: authorName }, { authors: authorName }];
+        }
+      }
+
+      // Debug do filtro final
+      console.log(
+        "Filter Apply:",
+        JSON.stringify(filter, (_, v) =>
+          v && v._bsontype === "ObjectID" ? v.toString() : v
+        )
+      );
+
+      const books = await book
+        .find(filter)
+        .populate("author")
+        .populate("publisher")
+        .lean();
+
+      console.log("Filter Apply:", JSON.stringify(filter));
+
+      if (books.length === 0) {
+        return next(new NotFound("No books found for the given filters"));
+      }
+
+      return res.status(200).json(books);
+    } catch (error) {
+      // CastError/ValidationError caem no seu middleware
       next(error);
     }
   };

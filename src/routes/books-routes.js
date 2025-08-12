@@ -8,6 +8,9 @@ const routes = express.Router();
 routes.get("/books", BookController.listBooks);
 
 //define router GET specific book by publisher on mongoDB
+routes.get("/book/search", BookController.listBookByFilter);
+
+//define router GET specific book by publisher on mongoDB
 routes.get("/book/search", BookController.listBookByPublisher);
 
 // define router GET Specific book from mongoDB
