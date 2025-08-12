@@ -5,6 +5,8 @@ const bookSchema = new mongoose.Schema({
   publisher: { type: String },
   value: { type: Number },
   pages: { type: Number,
+    // minPages: 10,
+    // maxPages: 1000
     validate: {
       validator: (value) => {
         return value >= 10 && value <= 5000;
