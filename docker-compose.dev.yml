@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: klini/bookstore-service:dev
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      MONGODB_URI: ${MONGODB_URI}  # pode apontar para Atlas OU para o mongo abaixo
+    command: npm run start:dev
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    # depends_on:
+    #   - mongo
+
+  # === Opcional: Mongo local (para trabalhar offline) ===
+  # mongo:
+  #   image: mongodb/mongodb-community-server:7.0-ubi8
+  #   ports:
+  #     - "27017:27017"
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: root
+  #   volumes:
+  #     - mongodata:/data/db
+
+volumes:
+  mongodata:
