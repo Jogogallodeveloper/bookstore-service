@@ -1,0 +1,16 @@
+version: "3.9"
+
+
+services:
+app:
+context: .
+dockerfile: Dockerfile
+image: klini/bookstore-service:latest
+environment:
+NODE_ENV: production
+PORT: 3000
+# ⚠️ NUNCA commitar credenciais. Use .env local, secrets no CI/CD ou variáveis do provedor (Fly, Render, etc.)
+MONGODB_URI: ${MONGODB_URI}
+ports:
+- "3000:3000"
+restart: unless-stopped
