@@ -27,6 +27,7 @@ class BookController {
     const [books, total] = await Promise.all([
       book
         .find({})
+        .sort({ title: 1})
         .skip((page - 1) * limit)
         .limit(limit)
         .populate('author')
