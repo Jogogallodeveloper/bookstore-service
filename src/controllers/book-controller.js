@@ -3,27 +3,54 @@ import { author } from "../models/index.js";
 import { book } from "../models/index.js";
 import { Publisher } from "../models/index.js";
 import NotFound from "../error/not-found.js";
+import wrongRequest from "../error/bad-request.js"
+import BadRequest from "../error/bad-request.js";
 
 // ✅ GET /books — returns the list of all books in JSON format
 class BookController {
   // ✅ methodo get all books
   static listBooks = async (req, res, next) => {
-    try {
-      //define the methodo that will find all books
-      const listBooks = await book
-        .find({})
-        .populate("author")
-        .populate("publisher");
-      // console log to print the response from mongo
+  try {
+    // parse seguro (defaults + limites)
+    const limitRaw = Number.parseInt(req.query.limit ?? '5', 10);
+    const pageRaw  = Number.parseInt(req.query.page  ?? '1', 10);
 
-      console.log("📄 Resultado vindo do Mongo:", listBooks);
-      // define the response when its ok
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 100) : 5; // limite hard de 100
+    const page  = Number.isFinite(pageRaw)  && pageRaw  > 0 ? pageRaw : 1;
 
-      res.status(200).json(listBooks);
-    } catch (error) {
-      next(error);
+    // validação explícita (se quiser falhar com 400 quando parâmetros ruins forem enviados)
+    if (!Number.isInteger(limit) || !Number.isInteger(page) || limit <= 0 || page <= 0) {
+      return next(new BadRequest('Parâmetros "page" e "limit" devem ser inteiros > 0.'));
     }
-  };
+
+    // consulta + paginação
+    const [books, total] = await Promise.all([
+      book
+        .find({})
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .populate('author')
+        .populate('publisher')
+        .lean(), // resposta mais leve
+      book.countDocuments({})
+    ]);
+
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+
+    // log opcional
+    // console.log('📄 Resultado vindo do Mongo:', { count: books.length, page, limit });
+
+    // resposta padronizada com meta de paginação
+    return res.status(200).json({
+      data: books,
+      meta: { page, limit, total, totalPages }
+    });
+
+  } catch (error) {
+    return next(error);
+  }
+};
+
 
   // ✅ methodo GET specific books
   static listBookById = async (req, res, next) => {
